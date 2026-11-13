@@ -1,6 +1,6 @@
 // server/src/simulation.js
-// Newspaper seller problem (Banks, Carson, Nelson & Nicol, Ch. 2).
-// Pure logic: no Express code in here, so it is easy to test.
+// Newspaper Seller Problem simulation engine.
+// Pure JavaScript (no Express dependency) so it can be tested independently.
 
 const DAY_TYPES = [
   { name: "Good", prob: 0.35 },
@@ -10,87 +10,110 @@ const DAY_TYPES = [
 
 const DEMANDS = [40, 50, 60, 70, 80, 90, 100];
 
-// P(demand | day type), same order as DEMANDS
+// Conditional probabilities P(demand | day type), in DEMANDS order.
 const DEMAND_PROBS = {
-  Good: [0.03, 0.05, 0.15, 0.2, 0.35, 0.15, 0.07],
-  Fair: [0.1, 0.18, 0.4, 0.2, 0.08, 0.04, 0.0],
-  Poor: [0.44, 0.22, 0.16, 0.12, 0.06, 0.0, 0.0],
+  Good: [0.03, 0.05, 0.15, 0.20, 0.35, 0.15, 0.07],
+  Fair: [0.10, 0.18, 0.40, 0.20, 0.08, 0.04, 0.00],
+  Poor: [0.44, 0.22, 0.16, 0.12, 0.06, 0.00, 0.00],
 };
 
 const DEFAULTS = {
   orderSize: 70,
   days: 20,
-  cost: 0.33, // purchase cost per paper
-  price: 0.5, // selling price per paper
-  scrap: 0.05, // scrap value per unsold paper
-  seed: null, // null = different every run
+  cost: 0.33,
+  price: 0.50,
+  scrap: 0.05,
+  seed: null, // Empty input generates a seed; the response returns it.
 };
 
-// Seedable random generator (mulberry32) so a run can be reproduced.
+const round2 = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
+
+// Mulberry32 PRNG. Seed 0 is valid and different from seed 1.
 function makeRng(seed) {
-  if (seed === null || seed === undefined || seed === "") return Math.random;
-  let a = (Number(seed) >>> 0) || 1;
+  let state = Number(seed) >>> 0;
   return function () {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
 
-// Inverse transform: first category whose cumulative probability >= r
-function pick(r, probs) {
-  let cum = 0;
-  for (let i = 0; i < probs.length; i++) {
-    cum += probs[i];
-    if (r <= cum + 1e-12) return i;
-  }
-  return probs.length - 1;
+// A six-decimal random number, used BOTH for selection and display.
+// This eliminates rounded-RN/category mismatches in the results table.
+function drawRandom(rng) {
+  return Math.floor(rng() * 1000000) / 1000000;
 }
 
-const round2 = (x) => Math.round(x * 100) / 100;
+// Inverse-transform sampling: probability intervals are [start, end).
+function pick(r, probabilities) {
+  let cumulative = 0;
+  for (let i = 0; i < probabilities.length; i++) {
+    cumulative += probabilities[i];
+    if (r < cumulative) return i;
+  }
+  return probabilities.length - 1; // floating-point safety net
+}
 
-// Profit for one day:
-// revenue from sales - cost of papers - lost profit from excess demand + salvage of scrap
+// Course-model daily profit includes opportunity cost for unmet demand.
+// Note: this is different from conventional accounting profit.
 function dailyProfit({ demand, orderSize, cost, price, scrap }) {
   const sold = Math.min(demand, orderSize);
+  const unsold = Math.max(orderSize - demand, 0);
+  const shortage = Math.max(demand - orderSize, 0);
   const revenue = sold * price;
   const buyCost = orderSize * cost;
-  const lostProfit = Math.max(demand - orderSize, 0) * (price - cost);
-  const salvage = Math.max(orderSize - demand, 0) * scrap;
-  return { revenue, buyCost, lostProfit, salvage, profit: revenue - buyCost - lostProfit + salvage };
+  const lostProfit = shortage * (price - cost);
+  const salvage = unsold * scrap;
+  const profit = revenue - buyCost - lostProfit + salvage;
+
+  return { sold, unsold, shortage, revenue, buyCost, lostProfit, salvage, profit };
 }
 
 function simulate(input = {}) {
   const p = { ...DEFAULTS, ...input };
-  const rng = makeRng(p.seed);
+  const seed = p.seed === null || p.seed === undefined || p.seed === ""
+    ? Math.floor(Math.random() * 4294967296)
+    : Number(p.seed);
+  const rng = makeRng(seed);
   const dayProbs = DAY_TYPES.map((d) => d.prob);
 
   const rows = [];
-  const tot = { revenue: 0, cost: 0, lost: 0, salvage: 0, profit: 0 };
+  const totals = { revenue: 0, cost: 0, lost: 0, salvage: 0, profit: 0 };
   const dayCount = { Good: 0, Fair: 0, Poor: 0 };
 
   for (let day = 1; day <= p.days; day++) {
-    const rn1 = rng();
+    const rn1 = drawRandom(rng);
     const dayType = DAY_TYPES[pick(rn1, dayProbs)].name;
-    const rn2 = rng();
+    const rn2 = drawRandom(rng);
     const demand = DEMANDS[pick(rn2, DEMAND_PROBS[dayType])];
+    const d = dailyProfit({
+      demand,
+      orderSize: p.orderSize,
+      cost: p.cost,
+      price: p.price,
+      scrap: p.scrap,
+    });
 
-    const d = dailyProfit({ demand, orderSize: p.orderSize, cost: p.cost, price: p.price, scrap: p.scrap });
-    tot.revenue += d.revenue;
-    tot.cost += d.buyCost;
-    tot.lost += d.lostProfit;
-    tot.salvage += d.salvage;
-    tot.profit += d.profit;
+    totals.revenue += d.revenue;
+    totals.cost += d.buyCost;
+    totals.lost += d.lostProfit;
+    totals.salvage += d.salvage;
+    totals.profit += d.profit;
     dayCount[dayType]++;
 
     rows.push({
       day,
-      rn1: round2(rn1),
+      rn1,
       dayType,
-      rn2: round2(rn2),
+      rn2,
       demand,
+      orderSize: p.orderSize,
+      sold: d.sold,
+      unsold: d.unsold,
+      shortage: d.shortage,
       revenue: round2(d.revenue),
+      buyCost: round2(d.buyCost),
       lostProfit: round2(d.lostProfit),
       salvage: round2(d.salvage),
       profit: round2(d.profit),
@@ -98,30 +121,45 @@ function simulate(input = {}) {
   }
 
   return {
-    params: p,
+    params: { ...p, seed }, // Actual seed makes even an unseeded run reproducible.
     rows,
     summary: {
-      totalRevenue: round2(tot.revenue),
-      totalCost: round2(tot.cost),
-      totalLostProfit: round2(tot.lost),
-      totalSalvage: round2(tot.salvage),
-      totalProfit: round2(tot.profit),
-      avgProfitPerDay: round2(tot.profit / p.days),
+      totalRevenue: round2(totals.revenue),
+      totalCost: round2(totals.cost),
+      totalLostProfit: round2(totals.lost),
+      totalSalvage: round2(totals.salvage),
+      totalProfit: round2(totals.profit),
+      avgProfitPerDay: round2(totals.profit / p.days),
       dayCount,
     },
   };
 }
 
-// Compare order sizes on the SAME random draws, so the comparison is fair.
+// Compare all order sizes using identical random draws (common random numbers).
 function compare(input = {}, orderSizes = DEMANDS) {
-  const noSeed = input.seed === null || input.seed === undefined || input.seed === "";
-  const seed = noSeed ? Math.floor(Math.random() * 1e9) : input.seed;
-  const results = orderSizes.map((q) => {
-    const r = simulate({ ...input, orderSize: q, seed });
-    return { orderSize: q, totalProfit: r.summary.totalProfit, avgProfitPerDay: r.summary.avgProfitPerDay };
+  const seed = input.seed === null || input.seed === undefined || input.seed === ""
+    ? Math.floor(Math.random() * 4294967296)
+    : Number(input.seed);
+
+  const results = orderSizes.map((orderSize) => {
+    const { summary } = simulate({ ...input, orderSize, seed });
+    return {
+      orderSize,
+      totalProfit: summary.totalProfit,
+      avgProfitPerDay: summary.avgProfitPerDay,
+    };
   });
+
   const best = results.reduce((a, b) => (b.totalProfit > a.totalProfit ? b : a));
   return { seed, days: input.days ?? DEFAULTS.days, results, best };
 }
 
-module.exports = { simulate, compare, dailyProfit, DAY_TYPES, DEMANDS, DEMAND_PROBS, DEFAULTS };
+module.exports = {
+  simulate,
+  compare,
+  dailyProfit,
+  DAY_TYPES,
+  DEMANDS,
+  DEMAND_PROBS,
+  DEFAULTS,
+};
