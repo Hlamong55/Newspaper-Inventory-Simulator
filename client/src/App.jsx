@@ -179,6 +179,7 @@ export default function App() {
         </div>
       </aside>
 
+
       {/* Main Content */}
       <div className="min-w-0 flex-1">
 
@@ -210,48 +211,12 @@ export default function App() {
           </nav>
         </div>
 
-        {/* Top Header */}
-        <header className="border-b border-slate-200 bg-white px-5 py-5 sm:px-8 lg:px-10">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
-
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
-                 Dashboard
-              </p>
-
-              <p className="mt-1 text-sm font-medium text-slate-800">
-                Newspaper Seller Problem
-              </p>
-            </div>
-
-            {/* Backend Status */}
-            <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600">
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  config
-                    ? "bg-emerald-600"
-                    : error
-                    ? "bg-rose-500"
-                    : "bg-slate-400"
-                }`}
-              />
-
-              {config
-                ? "Backend connected"
-                : error
-                ? "Connection failed"
-                : "Checking backend"}
-            </div>
-
-          </div>
-        </header>
-
-        <main className="mx-auto max-w-7xl space-y-7 px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
+        <main className="mx-auto max-w-7xl space-y-7 px-5 py-8 sm:px-8 lg:px-10 ">
 
           {/* Overview */}
           <section
             id="overview"
-            className="scroll-mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+            className="scroll-mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-md sm:p-8"
           >
             <div className="flex flex-wrap items-center gap-2">
 
