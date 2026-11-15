@@ -8,11 +8,11 @@ import ResultTable from "./components/ResultTable.jsx";
 import CompareChart from "./components/CompareChart.jsx";
 
 const navigation = [
-  { label: "Overview", href: "#overview", number: "1" },
-  { label: "Simulation setup", href: "#simulation", number: "2" },
-  { label: "Daily results", href: "#results", number: "3" },
-  { label: "Order comparison", href: "#comparison", number: "4" },
-  { label: "Model data", href: "#model", number: "5" },
+  { label: "Overview", href: "overview", number: "1" },
+  { label: "Simulation setup", href: "simulation", number: "2" },
+  { label: "Daily results", href: "results", number: "3" },
+  { label: "Order comparison", href: "comparison", number: "4" },
+  { label: "Model data", href: "model", number: "5" },
 ];
 
 function Section({
