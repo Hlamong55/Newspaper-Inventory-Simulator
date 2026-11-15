@@ -9,7 +9,7 @@ const dayColor = {
 export default function ResultTable({ rows }) {
   const shown = rows.slice(0, MAX_ROWS);
   const th = "sticky top-0 bg-slate-100 px-3 py-2 text-right font-semibold first:text-left";
-  const td = "px-3 py-2 text-right border-t border-slate-200 first:text-left";
+  const td = "px-3 py-3 text-right border-t border-slate-200 first:text-left";
 
   return (
     <div>
