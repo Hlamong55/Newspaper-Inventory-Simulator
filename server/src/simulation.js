@@ -47,12 +47,16 @@ function drawRandom(rng) {
 
 // Inverse-transform sampling: probability intervals are [start, end).
 function pick(r, probabilities) {
+  const randomInt = Math.round(r * 1_000_000);
   let cumulative = 0;
+
   for (let i = 0; i < probabilities.length; i++) {
-    cumulative += probabilities[i];
-    if (r < cumulative) return i;
+    cumulative += Math.round(probabilities[i] * 1_000_000);
+
+    if (randomInt < cumulative) return i;
   }
-  return probabilities.length - 1; // floating-point safety net
+
+  return probabilities.length - 1;
 }
 
 // Course-model daily profit includes opportunity cost for unmet demand.

@@ -58,3 +58,19 @@ test("compare returns every order size and a best one", () => {
   assert.ok(c.results.some((x) => x.orderSize === c.best.orderSize));
   assert.ok(c.results.every((x) => x.totalProfit <= c.best.totalProfit));
 });
+
+test("Fair day demand is correct at the 0.88 boundary", () => {
+  const { rows } = simulate({
+    ...base,
+    days: 25,
+    seed: 4097,
+  });
+
+  const row = rows[24];
+
+  assert.equal(row.dayType, "Fair");
+  assert.equal(row.rn2, 0.88);
+  assert.equal(row.demand, 80);
+  close(row.lostProfit, 1.7);
+  close(row.profit, 10.2);
+});
