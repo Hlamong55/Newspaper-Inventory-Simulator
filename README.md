@@ -203,9 +203,6 @@ Newspaper demand depends on the selected day type.
 | Fair | 0.350000 – 0.799999 |
 | Poor | 0.800000 – 0.999999 |
 
-The simulation uses integer-scaled cumulative probabilities
-to prevent floating-point boundary selection errors.
-
 ---
 
 ## Mathematical Model
@@ -284,33 +281,6 @@ Average Daily Profit = Total Profit / Simulation Days
 The profit formula follows the classical newspaper seller
 simulation model, where lost profit from unmet demand is
 treated as an opportunity-cost adjustment.
-
----
-
-## Example Calculation
-
-Assume the following values:
-
-| Parameter | Value |
-|---|---:|
-| Order Quantity | 70 |
-| Actual Demand | 80 |
-| Purchase Cost | $0.33 |
-| Selling Price | $0.50 |
-| Scrap Value | $0.05 |
-
-The calculation is:
-
-| Description | Result |
-|---|---:|
-| Newspapers Sold | 70 |
-| Unsold Newspapers | 0 |
-| Unmet Demand | 10 |
-| Revenue | $35.00 |
-| Purchase Cost | $23.10 |
-| Lost Profit | $1.70 |
-| Salvage Value | $0.00 |
-| **Daily Profit** | **$10.20** |
 
 ---
 
@@ -532,11 +502,6 @@ The backend validates all simulation parameters.
 | Scrap Value | $0–$1000 |
 | Random Seed | 0–4294967295 |
 
-Additional conditions:
-
-- Selling price must not be lower than purchase cost.
-- Scrap value must not exceed purchase cost.
-- Order quantity, simulation days, and seed must be integers.
 
 Invalid requests return appropriate JSON error messages.
 
@@ -606,18 +571,6 @@ Failed: 0
 
 ---
 
-## Academic Information
-
-| Information | Details |
-|---|---|
-| Course Code | CSE 424 |
-| Course Title | Simulation & Modeling Sessional |
-| Project Name | NewsLab |
-| Project Topic | Newspaper Seller Problem |
-| Project Type | Full-Stack Web Application |
-| Simulation Method | Monte Carlo Simulation |
-
----
 
 ## Reference
 
@@ -636,6 +589,3 @@ By combining probability-based simulation, random number
 generation, financial calculations, and data visualization,
 the application demonstrates how simulation techniques can
 support decision-making under uncertainty.
-
-This project integrates theoretical simulation concepts
-with practical frontend and backend web development.
