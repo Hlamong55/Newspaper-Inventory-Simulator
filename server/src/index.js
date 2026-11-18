@@ -12,6 +12,9 @@ app.use(express.json({ limit: "10kb" }));
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 app.use("/api", routes);
 
+// Unknown /api route and bad JSON handling
+app.use("/api", (req, res) => res.status(404).json({ error: "Unknown API route" }));
+
 // Production: serve the built React app (client/dist) from the same server.
 const dist = path.join(__dirname, "..", "..", "client", "dist");
 if (fs.existsSync(dist)) {
@@ -19,8 +22,7 @@ if (fs.existsSync(dist)) {
   app.get("*", (req, res) => res.sendFile(path.join(dist, "index.html")));
 }
 
-// Unknown /api route and bad JSON handling
-app.use("/api", (req, res) => res.status(404).json({ error: "Unknown API route" }));
+
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   const status = err.status || 500;
